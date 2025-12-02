@@ -1,0 +1,117 @@
+﻿@model GardenBookingApp.Models.GardenBooking
+@{
+    ViewData["Title"] = "Edit Booking";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 25px;
+        }
+
+            .btn-success:hover {
+                transform: scale(1.02);
+                color: white;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-card">
+            <div class="header-section">
+                <h1 class="display-4">✏️ Edit Garden Booking</h1>
+                <p class="lead">Modify the details for booking on @Model.BookingDate.ToString("dd MMM yyyy")</p>
+            </div>
+
+            <div class="row p-4">
+                <div class="col-md-12">
+                    <form asp-action="Edit" method="post">
+                        @* CRITICAL: Hidden fields for Azure Table Storage keys (PartitionKey, RowKey) and ETag for optimistic concurrency *@
+                        <input type="hidden" asp-for="PartitionKey" />
+                        <input type="hidden" asp-for="RowKey" />
+                        <input type="hidden" asp-for="ETag" />
+                        <input type="hidden" asp-for="CreatedDate" />
+
+                        <div class="form-group">
+                            <label asp-for="CustomerName">Customer Name</label>
+                            <input asp-for="CustomerName" class="form-control form-control-lg" required />
+                            <span asp-validation-for="CustomerName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="MobileNumber">Mobile Number</label>
+                            <input asp-for="MobileNumber" class="form-control form-control-lg" required />
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="BookingDate">Booking Date</label>
+                            <input asp-for="BookingDate" type="date" class="form-control form-control-lg" required />
+                            <span asp-validation-for="BookingDate" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="NumberOfPeople">Number of People</label>
+                            <input asp-for="NumberOfPeople" type="number" class="form-control form-control-lg" min="1" max="1500" required />
+                            <span asp-validation-for="NumberOfPeople" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Purpose">Purpose</label>
+                            <select asp-for="Purpose" class="form-control form-control-lg">
+                                <option value="">-- Select Purpose --</option>
+                                <option value="Birthday Party">Birthday Party</option>
+                                <option value="Wedding">Wedding</option>
+                                <option value="Anniversary">Anniversary</option>
+                                <option value="Corporate Event">Corporate Event</option>
+                                <option value="Family Function">Family Function</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span asp-validation-for="Purpose" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-success btn-block btn-lg mt-4">
+                            💾 Save Changes
+                        </button>
+
+                        <a asp-action="AllBookings" class="btn btn-outline-secondary btn-block mt-2">
+                            ← Back to All Bookings
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,200 @@
+﻿@model List<GardenBookingApp.Models.GardenBooking>
+@{
+    ViewData["Title"] = "All Bookings";
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>@ViewData["Title"]</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+    </style>
+    <script>
+        // Helper function to format date as YYYY-MM-DD
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2)
+                month = '0' + month;
+            if (day.length < 2)
+                day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        // Function to calculate and set the date inputs for a specific filter
+        function setDateInputs(filterType) {
+            const today = new Date();
+            let startDate, endDate;
+
+            if (filterType === 'week') {
+                // Calculate start of the week (Monday)
+                const dayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+                const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust for Monday start
+                startDate = new Date(today.setDate(diff));
+                endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+            } else if (filterType === 'month') {
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Last day of the month
+            } else {
+                // For 'all' or default, just clear or set to a wide default
+                document.getElementById('startDateInput').value = '';
+                document.getElementById('endDateInput').value = '';
+                return;
+            }
+
+            document.getElementById('startDateInput').value = formatDate(startDate);
+            document.getElementById('endDateInput').value = formatDate(endDate);
+        }
+
+        // Add event listeners to Quick Filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.filter-group .btn-group a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // When a quick filter is clicked, set the date inputs before navigating
+                    const filter = this.getAttribute('asp-route-filter');
+                    if (filter && filter !== 'all') {
+                         setDateInputs(filter);
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+
+        @* --- MESSAGE DISPLAY LOGIC (Picks up messages from Edit/Delete redirects) --- *@
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>✓ Success!</strong> @TempData["Success"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>✗ Error!</strong> @TempData["Error"]
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        }
+        @* -------------------------------------------------------------------------- *@
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">📋 All Garden Bookings</h3>
+            </div>
+            <div class="card-body">
+                <a asp-action="Index" class="btn btn-secondary mb-3">← Back to Home</a>
+
+                @if (Model.Any())
+                {
+                    <div class="mb-3">
+                        <a asp-action="AllBookings" asp-route-filter="daily" class="btn btn-primary">Today</a>
+                        <a asp-action="AllBookings" asp-route-filter="weekly" class="btn btn-info">This Week</a>
+                        <a asp-action="AllBookings" asp-route-filter="monthly" class="btn btn-warning">This Month</a>
+                        <a asp-action="AllBookings" asp-route-filter="all" class="btn btn-secondary">All</a>
+                    </div>
+
+                    <!-- Custom Date Filter -->
+                    <form asp-action="AllBookings" method="get" class="form-inline">
+                        <input type="hidden" name="filter" value="custom" />
+
+                        <label class="mr-2 text-white">Start:</label>
+                        <input type="date" name="startDate" class="form-control mr-2" />
+
+                        <label class="mr-2 text-white">End:</label>
+                        <input type="date" name="endDate" class="form-control mr-2" />
+
+                        <button class="btn btn-success">Apply</button>
+                    </form>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Name</th>
+                                    <th>Mobile</th>
+                                    <th>People</th>
+                                    <th>Purpose</th>
+                                    <th>Booked On</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var booking in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@booking.BookingDate.ToString("dd MMM yyyy")</strong>
+                                            <br />
+                                            <small>@booking.BookingDate.ToString("dddd")</small>
+                                        </td>
+                                        <td>@booking.CustomerName</td>
+                                        <td>@booking.MobileNumber</td>
+                                        <td>@booking.NumberOfPeople</td>
+                                        <td>@(booking.Purpose ?? "-")</td>
+                                        <td>
+                                            <small>@booking.CreatedDate.ToString("dd MMM yyyy")</small>
+                                        </td>
+                                        <td style="min-width: 150px;">
+                                            <a asp-action="Edit"
+                                               asp-route-partitionKey="@booking.PartitionKey"
+                                               asp-route-rowKey="@booking.RowKey"
+                                               class="btn btn-sm btn-info">
+                                                ✏️ Edit
+                                            </a>
+
+                                            <a asp-action="Delete"
+                                               asp-route-partitionKey="@booking.PartitionKey"
+                                               asp-route-rowKey="@booking.RowKey"
+                                               class="btn btn-sm btn-danger ml-1">
+                                                🗑️ Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Total Bookings:</strong> @Model.Count
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning text-center p-5">
+                        <h4>No Bookings Found</h4>
+                        <p>Start booking the garden now!</p>
+                        <a asp-action="Index" class="btn btn-primary">Book Now</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</body>
+</html>

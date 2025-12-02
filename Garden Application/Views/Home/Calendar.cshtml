@@ -1,0 +1,380 @@
+﻿@{
+    ViewData["Title"] = "Booking Calendar";
+    var bookedDates = ViewBag.BookedDates as List<DateTime> ?? new List<DateTime>();
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Calendar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .calendar-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+        }
+
+        .calendar-nav button {
+            background: white;
+            color: #11998e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+
+            .calendar-nav button:hover {
+                transform: scale(1.05);
+            }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: bold;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            color: #495057;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+            .calendar-day:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+
+            .calendar-day.other-month {
+                opacity: 0.3;
+            }
+
+            .calendar-day.today {
+                border-color: #007bff;
+                background: #e7f3ff;
+            }
+
+            .calendar-day.booked {
+                background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+                color: white;
+                border-color: #ff6b6b;
+                font-weight: bold;
+            }
+
+                .calendar-day.booked:hover {
+                    background: linear-gradient(135deg, #ee5a6f 0%, #ff6b6b 100%);
+                }
+
+        .day-number {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .booking-badge {
+            background: white;
+            color: #ff6b6b;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-top: 5px;
+        }
+
+        .modal-content {
+            border-radius: 15px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .legend-available {
+            background: white;
+            border: 2px solid #e9ecef;
+        }
+
+        .legend-booked {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        .legend-today {
+            background: #e7f3ff;
+            border: 2px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="calendar-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>🗓️ Garden Booking Calendar</h2>
+                <div>
+                    <a asp-action="Index" class="btn btn-primary">📝 Book Now</a>
+                    <a asp-action="AllBookings" class="btn btn-secondary">📋 All Bookings</a>
+                </div>
+            </div>
+
+            <div class="calendar-header">
+                <div class="calendar-nav">
+                    <button onclick="previousMonth()">◄ Previous</button>
+                </div>
+                <h3 id="currentMonth" class="mb-0"></h3>
+                <div class="calendar-nav">
+                    <button onclick="nextMonth()">Next ►</button>
+                </div>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid"></div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-box legend-available"></div>
+                    <span>Available - Click to Book</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box legend-booked"></div>
+                    <span>Booked</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box legend-today"></div>
+                    <span>Today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="bookingDetails">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentDate = new Date();
+        let bookedDates = @Html.Raw(Json.Serialize(bookedDates.Select(d => d.ToString("yyyy-MM-dd"))));
+        let monthBookings = [];
+
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        async function loadMonthBookings(year, month) {
+            try {
+                const response = await fetch(`/Home/GetBookingsForMonth?year=${year}&month=${month}`);
+                monthBookings = await response.json();
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                monthBookings = [];
+            }
+        }
+
+        async function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            await loadMonthBookings(year, month + 1);
+
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            let calendarHTML = '';
+
+            // Day headers
+            dayNames.forEach(day => {
+                calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Previous month days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                calendarHTML += `<div class="calendar-day other-month">
+                    <div class="day-number">${day}</div>
+                </div>`;
+            }
+
+            // Current month days
+            const today = new Date();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+                const isBooked = bookedDates.includes(currentDateStr);
+                const booking = monthBookings.find(b => b.date === currentDateStr);
+
+                let classes = 'calendar-day';
+                if (isToday) classes += ' today';
+                if (isBooked) classes += ' booked';
+
+                calendarHTML += `<div class="${classes}" onclick='showBookingDetails(${JSON.stringify(booking)}, "${currentDateStr}")'>
+                    <div class="day-number">${day}</div>
+                    ${isBooked ? '<div class="booking-badge">BOOKED</div>' : ''}
+                </div>`;
+            }
+
+            // Next month days
+            const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+            const remainingCells = totalCells - (firstDay + daysInMonth);
+            for (let i = 1; i <= remainingCells; i++) {
+                calendarHTML += `<div class="calendar-day other-month">
+                    <div class="day-number">${i}</div>
+                </div>`;
+            }
+
+            document.getElementById('calendarGrid').innerHTML = calendarHTML;
+        }
+
+        function showBookingDetails(booking, dateStr) {
+            const date = new Date(dateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const formattedDate = date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            let content = `<h5>📅 ${formattedDate}</h5>`;
+
+            if (booking) {
+                // Date is already booked - show details in modal
+                content += `
+                    <div class="alert alert-danger">
+                        <h6>❌ Garden is Already Booked</h6>
+                    </div>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Customer Name:</th>
+                            <td>${booking.name}</td>
+                        </tr>
+                        <tr>
+                            <th>Number of People:</th>
+                            <td>${booking.people}</td>
+                        </tr>
+                        <tr>
+                            <th>Purpose:</th>
+                            <td>${booking.purpose || '-'}</td>
+                        </tr>
+                    </table>
+                    <p class="text-muted">Please select another available date.</p>
+                `;
+                document.getElementById('bookingDetails').innerHTML = content;
+                $('#bookingModal').modal('show');
+            } else if (date < today) {
+                // Date has passed - show in modal
+                content += `
+                    <div class="alert alert-secondary">
+                        <h6>⏱️ Date Has Passed</h6>
+                        <p>This date is no longer available for booking.</p>
+                    </div>
+                `;
+                document.getElementById('bookingDetails').innerHTML = content;
+                $('#bookingModal').modal('show');
+            } else {
+                // Date is available - redirect to booking page
+                window.location.href = `/Home/Index?selectedDate=${dateStr}`;
+            }
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        // Initialize calendar
+        $(document).ready(function() {
+            renderCalendar();
+
+            // Ensure modal closes properly
+            $('.close, [data-dismiss="modal"]').on('click', function() {
+                $('#bookingModal').modal('hide');
+            });
+        });
+    </script>
+</body>
+</html>
