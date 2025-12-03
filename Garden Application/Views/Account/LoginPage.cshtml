@@ -1,0 +1,49 @@
+﻿@model GardenBookingApp.Models.User
+
+
+@{
+    // Set the title for the browser tab
+    ViewData["Title"] = "Login";
+
+    // Attempt to capture the ReturnUrl if the user was redirected here
+    // This allows the user to be sent back to the page they tried to access after logging in.
+    var returnUrl = Context.Request.Query["ReturnUrl"];
+}
+
+<div class="container mt-5" style="max-width: 450px;">
+    <div class="card shadow-lg border-0 rounded-lg">
+        <div class="card-header bg-primary text-white">
+            <h3 class="text-center font-weight-light my-3">🔒 User Login</h3>
+        </div>
+        <div class="card-body p-4">
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger text-center" role="alert">@ViewBag.Error</div>
+            }
+
+            <form asp-action="Login" method="post">
+
+                <div class="form-group mb-3">
+                    <label class="small mb-1">Username (Test: testuser)</label>
+                    <input name="username" class="form-control py-3" type="text" placeholder="Enter username" required />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="small mb-1">Password (Test: password123)</label>
+                    <input name="password" class="form-control py-3" type="password" placeholder="Enter password" required />
+                </div>
+
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <button type="submit" class="btn btn-primary btn-block mt-4">Sign In</button>
+            </form>
+        </div>
+
+        <div class="card-footer text-center py-3">
+            <div class="small">
+                Need an account? <a asp-controller="Account" asp-action="Register">Register here</a>
+            </div>
+        </div>
+    </div>
+</div>

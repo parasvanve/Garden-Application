@@ -1,6 +1,9 @@
 ﻿@{
     ViewData["Title"] = "Booking Calendar";
     var bookedDates = ViewBag.BookedDates as List<DateTime> ?? new List<DateTime>();
+
+    // Check if user is logged in
+    bool isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
 }
 
 <!DOCTYPE html>
@@ -11,6 +14,7 @@
     <title>Booking Calendar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        /* Keeping all your original styles exactly the same */
         * {
             box-sizing: border-box;
         }
@@ -237,7 +241,7 @@
             border: 2px solid #007bff;
         }
 
-        /* Tablet styles (768px and up) */
+        /* Media Queries included from original code */
         @@media (min-width: 768px) {
             body
 
@@ -317,8 +321,6 @@
         }
 
         }
-
-        /* Desktop styles (1024px and up) */
         @@media (min-width: 1024px) {
             body
 
@@ -356,8 +358,6 @@
         }
 
         }
-
-        /* Mobile landscape fix */
         @@media (max-width: 767px) and (orientation: landscape) {
             .calendar-day
 
@@ -370,8 +370,6 @@
         }
 
         }
-
-        /* Extra small screens */
         @@media (max-width: 320px) {
             body
 
@@ -411,8 +409,6 @@
         }
 
         }
-
-        /* Small mobile devices */
         @@media (max-width: 380px) {
             .calendar-card
 
@@ -483,8 +479,15 @@
             <div class="header-section">
                 <h2 class="header-title">🗓️ Garden Booking Calendar</h2>
                 <div class="header-buttons">
-                    <a asp-action="Index" class="btn btn-primary">📝 Book Now</a>
-                    <a asp-action="AllBookings" class="btn btn-secondary">📋 All Bookings</a>
+                    @if (isAuthenticated)
+                    {
+                        <a asp-action="Index" class="btn btn-primary">📝 Book Now</a>
+                        <a asp-action="AllBookings" class="btn btn-secondary">📋 All Bookings</a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn btn-primary">🔒 Login to Book</a>
+                    }
                 </div>
             </div>
 
@@ -503,7 +506,7 @@
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-box legend-available"></div>
-                    <span>Available - Click to Book</span>
+                    <span>Available</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-box legend-booked"></div>
@@ -517,12 +520,11 @@
         </div>
     </div>
 
-    <!-- Booking Details Modal -->
     <div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
+                    <h5 class="modal-title" id="bookingModalLabel">Details</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -530,6 +532,10 @@
                 <div class="modal-body" id="bookingDetails">
                 </div>
                 <div class="modal-footer">
+                    @if (!isAuthenticated)
+                    {
+                        <a href="/Account/Login" class="btn btn-primary">Login to Book</a>
+                    }
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -542,6 +548,10 @@
         let currentDate = new Date();
         let bookedDates = @Html.Raw(Json.Serialize(bookedDates.Select(d => d.ToString("yyyy-MM-dd"))));
         let monthBookings = [];
+        // LOGIC CHANGE: Pass C# auth state to Javascript
+        const isUserLoggedIn = @Json.Serialize(isAuthenticated);
+        // Replace this with your actual Login URL
+        const loginUrl = "/Account/Login";
 
         const monthNames = ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"];
@@ -590,13 +600,19 @@
                 const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const isBooked = bookedDates.includes(currentDateStr);
+
+                // We handle the booking object logic inside showBookingDetails now
+                // to prevent rendering data in HTML if unnecessary
                 const booking = monthBookings.find(b => b.date === currentDateStr);
 
                 let classes = 'calendar-day';
                 if (isToday) classes += ' today';
                 if (isBooked) classes += ' booked';
 
-                calendarHTML += `<div class="${classes}" onclick='showBookingDetails(${JSON.stringify(booking)}, "${currentDateStr}")'>
+                // Escaping data for safety
+                const safeBooking = booking ? JSON.stringify(booking).replace(/"/g, '&quot;') : 'null';
+
+                calendarHTML += `<div class="${classes}" onclick='showBookingDetails(${safeBooking}, "${currentDateStr}")'>
                     <div class="day-number">${day}</div>
                     ${isBooked ? '<div class="booking-badge">BOOKED</div>' : ''}
                 </div>`;
@@ -620,48 +636,60 @@
             today.setHours(0, 0, 0, 0);
 
             const formattedDate = date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
 
             let content = `<h5>📅 ${formattedDate}</h5>`;
 
+            // SCENARIO 1: The Date is Booked
             if (booking) {
-                content += `
-                    <div class="alert alert-danger">
-                        <h6>❌ Garden is Already Booked</h6>
-                    </div>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Customer Name:</th>
-                            <td>${booking.name}</td>
-                        </tr>
-                        <tr>
-                            <th>Number of People:</th>
-                            <td>${booking.people}</td>
-                        </tr>
-                        <tr>
-                            <th>Purpose:</th>
-                            <td>${booking.purpose || '-'}</td>
-                        </tr>
-                    </table>
-                    <p class="text-muted">Please select another available date.</p>
-                `;
+                if (isUserLoggedIn) {
+                    // === OWNER VIEW (Logged In) ===
+                    content += `
+                        <div class="alert alert-danger">
+                            <h6>❌ Garden is Already Booked</h6>
+                        </div>
+                        <table class="table table-bordered">
+                            <tr><th>Customer Name:</th><td>${booking.name}</td></tr>
+                            <tr><th>People:</th><td>${booking.people}</td></tr>
+                            <tr><th>Purpose:</th><td>${booking.purpose || '-'}</td></tr>
+                        </table>
+                    `;
+                } else {
+                    // === PUBLIC VIEW (Not Logged In) ===
+                    // Do not show names or purpose
+                    content += `
+                        <div class="alert alert-warning">
+                            <h6>❌ Reserved</h6>
+                            <p>This date has already been booked.</p>
+                        </div>
+                        <p class="text-muted">Please log in to see details or book a different date.</p>
+                    `;
+                }
                 document.getElementById('bookingDetails').innerHTML = content;
                 $('#bookingModal').modal('show');
-            } else if (date < today) {
+            }
+
+            // SCENARIO 2: Date Passed (Old date)
+            else if (date < today) {
                 content += `
                     <div class="alert alert-secondary">
                         <h6>⏱️ Date Has Passed</h6>
-                        <p>This date is no longer available for booking.</p>
-                    </div>
-                `;
+                    </div>`;
                 document.getElementById('bookingDetails').innerHTML = content;
                 $('#bookingModal').modal('show');
-            } else {
-                window.location.href = `/Home/Index?selectedDate=${dateStr}`;
+            }
+
+            // SCENARIO 3: Date Available
+            else {
+                if (isUserLoggedIn) {
+                    // Go to booking page
+                    window.location.href = `/Home/Index?selectedDate=${dateStr}`;
+                } else {
+                    // Redirect to Login
+                    // Optional: You can append ?ReturnUrl=... to redirect back after login
+                    window.location.href = loginUrl;
+                }
             }
         }
 

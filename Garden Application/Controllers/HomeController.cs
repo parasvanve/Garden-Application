@@ -118,6 +118,16 @@ namespace GardenBookingApp.Controllers
             return View();
         }
 
+        public async Task<IActionResult> PublicCalendar()
+        {
+            var bookedDates = await _gardenService.GetBookedDatesAsync();
+            ViewBag.BookedDates = bookedDates;
+            return View();
+        }
+
+
+
+
         [HttpGet]
         public async Task<IActionResult> GetBookingsForMonth(int year, int month)
         {

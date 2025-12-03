@@ -56,5 +56,7 @@ namespace GardenBookingApp.Models
             BookingDate = DateTime.SpecifyKind(BookingDate, DateTimeKind.Utc);
             CreatedDate = DateTime.UtcNow;
         }
+
+
     }
 }
