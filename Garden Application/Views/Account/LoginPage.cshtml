@@ -1,49 +1,573 @@
 ﻿@model GardenBookingApp.Models.User
-
-
 @{
-    // Set the title for the browser tab
     ViewData["Title"] = "Login";
-
-    // Attempt to capture the ReturnUrl if the user was redirected here
-    // This allows the user to be sent back to the page they tried to access after logging in.
     var returnUrl = Context.Request.Query["ReturnUrl"];
+    Layout = null;
 }
 
-<div class="container mt-5" style="max-width: 450px;">
-    <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-primary text-white">
-            <h3 class="text-center font-weight-light my-3">🔒 User Login</h3>
-        </div>
-        <div class="card-body p-4">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Garden Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-            @if (ViewBag.Error != null)
-            {
-                <div class="alert alert-danger text-center" role="alert">@ViewBag.Error</div>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .login-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            min-height: min-content;
+            margin: auto;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .login-body {
+            flex-grow: 1;
+            padding: 40px 35px;
+        }
+
+        body::before,
+        body::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        body::before {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+
+        body::after {
+            width: 400px;
+            height: 400px;
+            bottom: -150px;
+            right: -150px;
+            animation-delay: 5s;
+        }
+
+        @@keyframes float {
+            0%, 100% {
+                transform: translateY(0) scale(1);
             }
 
-            <form asp-action="Login" method="post">
+            50% {
+                transform: translateY(-30px) scale(1.1);
+            }
+        }
 
-                <div class="form-group mb-3">
-                    <label class="small mb-1">Username (Test: testuser)</label>
-                    <input name="username" class="form-control py-3" type="text" placeholder="Enter username" required />
+        @@keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .login-header::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                right: -50%;
+                width: 200%;
+                height: 200%;
+                background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                animation: rotate 15s linear infinite;
+            }
+
+        @@keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .garden-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: bounce 2s infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        @@keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .login-header h2 {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .login-header p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1rem;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            margin-bottom: 25px;
+            animation: shake 0.5s;
+        }
+
+        @@keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            75% {
+                transform: translateX(10px);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+            .form-group label {
+                font-weight: 600;
+                color: #495057;
+                margin-bottom: 10px;
+                display: block;
+                font-size: 0.95rem;
+            }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+            font-size: 1.1rem;
+            z-index: 2;
+        }
+
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 14px 15px 14px 45px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+            .form-control:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+                background: white;
+                outline: none;
+            }
+
+            .form-control::placeholder {
+                color: #adb5bd;
+            }
+
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .btn-login::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+                transition: left 0.5s;
+            }
+
+            .btn-login:hover::before {
+                left: 100%;
+            }
+
+            .btn-login:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-login:active {
+                transform: translateY(-1px);
+            }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+            .divider::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 50%;
+                width: 100%;
+                height: 1px;
+                background: #e9ecef;
+            }
+
+            .divider span {
+                background: white;
+                padding: 0 15px;
+                color: #6c757d;
+                font-size: 0.9rem;
+                position: relative;
+                z-index: 1;
+            }
+
+        .demo-credentials {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+            .demo-credentials h6 {
+                color: #667eea;
+                font-weight: 700;
+                margin-bottom: 15px;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+            .credential-item:hover {
+                transform: translateX(5px);
+                box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            }
+
+            .credential-item:last-child {
+                margin-bottom: 0;
+            }
+
+        .credential-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .credential-value {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .login-footer {
+            margin-top: auto;
+            background: #f8f9fa;
+            padding: 25px;
+            text-align: center;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+            .back-link:hover {
+                color: #764ba2;
+                gap: 12px;
+            }
+
+        .register-link {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #6c757d;
+        }
+
+            .register-link a {
+                color: #667eea;
+                font-weight: 600;
+                text-decoration: none;
+            }
+
+                .register-link a:hover {
+                    text-decoration: underline;
+                }
+
+        @@media (max-width: 576px) {
+            body {
+                padding: 15px;
+            }
+
+            .login-header {
+                padding: 30px 20px;
+            }
+
+            .garden-icon {
+                font-size: 3rem;
+            }
+
+            .login-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .login-body {
+                padding: 30px 25px;
+            }
+
+            .form-control {
+                padding: 12px 12px 12px 40px;
+            }
+
+            .btn-login {
+                padding: 13px;
+                font-size: 1rem;
+            }
+
+            .demo-credentials {
+                padding: 15px;
+            }
+
+            .credential-item {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+        }
+
+        .btn-login.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+            .btn-login.loading::after {
+                content: '';
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                top: 50%;
+                left: 50%;
+                margin-left: -10px;
+                margin-top: -10px;
+                border: 3px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 0.8s linear infinite;
+            }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="garden-icon">🌿</div>
+                <h2>Garden Booking</h2>
+                <p>Sign in to reserve your perfect garden space</p>
+            </div>
+
+            <div class="login-body">
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Error!</strong> @ViewBag.Error
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post" id="loginForm">
+                    <div class="form-group">
+                        <label for="username">
+                            <i class="fas fa-user-circle"></i> Username
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <input name="username"
+                                   id="username"
+                                   class="form-control"
+                                   type="text"
+                                   placeholder="Enter your username"
+                                   required
+                                   autocomplete="username" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input name="password"
+                                   id="password"
+                                   class="form-control"
+                                   type="password"
+                                   placeholder="Enter your password"
+                                   required
+                                   autocomplete="current-password" />
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="ReturnUrl" value="@returnUrl" />
+
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+
+                <div class="divider">
+                    <span>Test Credentials</span>
                 </div>
+            </div>
 
-                <div class="form-group mb-3">
-                    <label class="small mb-1">Password (Test: password123)</label>
-                    <input name="password" class="form-control py-3" type="password" placeholder="Enter password" required />
+            <div class="login-footer">
+                <a asp-controller="Home" asp-action="Calendar" class="back-link">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Calendar</span>
+                </a>
+                <div class="register-link">
+                    Don't have an account?
+                    <a asp-controller="Account" asp-action="Register">Register here</a>
                 </div>
-
-                <input type="hidden" name="returnUrl" value="@returnUrl" />
-
-                <button type="submit" class="btn btn-primary btn-block mt-4">Sign In</button>
-            </form>
-        </div>
-
-        <div class="card-footer text-center py-3">
-            <div class="small">
-                Need an account? <a asp-controller="Account" asp-action="Register">Register here</a>
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        function fillCredentials(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+
+            const usernameField = document.getElementById('username');
+            const passwordField = document.getElementById('password');
+
+            usernameField.style.transform = 'scale(1.05)';
+            passwordField.style.transform = 'scale(1.05)';
+
+            setTimeout(() => {
+                usernameField.style.transform = 'scale(1)';
+                passwordField.style.transform = 'scale(1)';
+            }, 200);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function() {
+            const btn = document.getElementById('loginBtn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span style="opacity: 0;">Signing In...</span>';
+        });
+
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.style.transition = 'all 0.3s ease';
+        });
+    </script>
+</body>
+</html>

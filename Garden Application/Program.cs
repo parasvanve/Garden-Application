@@ -1,11 +1,19 @@
-using GardenBookingApp.Services;
+﻿using GardenBookingApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllersWithViews();
 
-// Register Garden Service with Dependency Injection
+// Enable Session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// Register Garden Service
 builder.Services.AddScoped<IGardenService, GardenService>();
 
 var app = builder.Build();
@@ -23,12 +31,20 @@ else
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
+
+// CRITICAL: Session must be enabled BEFORE authentication middleware
+app.UseSession();
+
+// Add Session Auth Middleware (authenticates user from session)
+app.UseMiddleware<SessionAuthMiddleware>();
+
+// Authorization must come AFTER authentication
 app.UseAuthorization();
 
+// Default route set to Calendar
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=PublicCalendar}/{id?}");
+    pattern: "{controller=Home}/{action=Calendar}/{id?}");
 
 app.Run();

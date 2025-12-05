@@ -2,53 +2,52 @@
 
 public class AccountController : Controller
 {
-    // ----------------------------------------------------------------------
-    // HARDCODED CREDENTIALS - FOR TESTING ONLY
-    // ----------------------------------------------------------------------
     private const string TestUsername = "testuser";
     private const string TestPassword = "password123";
-    // ----------------------------------------------------------------------
 
-    // GET: /Account/Login (Displays the login form)
-    public IActionResult Login()
+    // GET: Login Page
+    public IActionResult Login(string returnUrl = null)
     {
-        // No check for User.Identity.IsAuthenticated needed, 
-        // as we are not using cookies for session management.
+        ViewBag.ReturnUrl = returnUrl;
         return View("LoginPage");
     }
 
-    // POST: /Account/Login (Processes the login form data)
+    // POST: Login
     [HttpPost]
-    public IActionResult Login(string username, string password)
+    public IActionResult Login(string username, string password, string returnUrl)
     {
-        // 1. SIMPLE LOGIC CHECK
         if (username == TestUsername && password == TestPassword)
         {
-            // --- CHECK SUCCESS ---
-            // If the check passes, we redirect to the "secured" page. 
-            // NOTE: This page is NOT actually secured without cookies!
+            // CRITICAL FIX: Use "Username" not "UserSession"
+            HttpContext.Session.SetString("Username", username);
+
+            // Optional: Add additional session data
+            HttpContext.Session.SetInt32("IsAuthenticated", 1);
+
+            // Redirect to return URL or Calendar
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+
             return RedirectToAction("Calendar", "Home");
         }
 
-        // --- CHECK FAILURE ---
         ViewBag.Error = "Invalid username or password.";
-
-        // Return to the login page to display the error
         return View("LoginPage");
     }
 
-    // GET: /Account/Logout is no longer needed since there is no session to destroy.
-    // However, if the user navigates to it, we redirect them back to the login page.
+    // POST: Logout (should be POST for security)
+    [HttpPost]
     public IActionResult Logout()
     {
-        // Since no cookie is set, simply redirecting to login is sufficient.
-        return RedirectToAction("Login");
+        HttpContext.Session.Clear();  // Clear all session data
+        return RedirectToAction("Calendar", "Home");  // Go back to Calendar, not Login
     }
 
-    // GET: /Account/Register (Simple placeholder)
+    // Optional: Add Register action
     public IActionResult Register()
     {
-        // Assuming your register view file is named RegisterPage.cshtml
-        return View("RegisterPage");
+        return View();
     }
 }

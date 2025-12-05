@@ -1,6 +1,9 @@
 ﻿@{
-    ViewData["Title"] = "Booking Calendar";
+    ViewData["Title"] = "Garden Booking Calendar";
     var bookedDates = ViewBag.BookedDates as List<DateTime> ?? new List<DateTime>();
+    bool isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+    string userName = User.Identity?.Name ?? "";
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -8,18 +11,32 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Calendar</title>
+    <title>Garden Booking Calendar</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
         }
 
+        html {
+            position: static !important;
+            min-height: auto !important;
+            font-size: 14px !important;
+        }
+
+        @@media (min-width: 768px) {
+            html {
+                font-size: 16px !important;
+            }
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 10px;
-            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            min-height: 100vh !important;
+            padding: 10px !important;
+            margin: 0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
         }
 
         .calendar-card {
@@ -42,18 +59,36 @@
             font-size: 1.5rem;
             font-weight: bold;
             margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .header-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            align-items: center;
         }
 
             .header-buttons .btn {
                 flex: 1;
                 min-width: 140px;
                 white-space: nowrap;
+            }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+            .user-info strong {
+                color: #667eea;
             }
 
         .calendar-header {
@@ -128,7 +163,7 @@
             font-size: 0.75rem;
         }
 
-            .calendar-day:hover:not(.other-month) {
+            .calendar-day:hover:not(.other-month):not(.past-date) {
                 transform: translateY(-3px);
                 box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             }
@@ -136,6 +171,12 @@
             .calendar-day.other-month {
                 opacity: 0.3;
                 cursor: default;
+            }
+
+            .calendar-day.past-date {
+                opacity: 0.5;
+                cursor: not-allowed;
+                background: #f8f9fa;
             }
 
             .calendar-day.today {
@@ -237,243 +278,232 @@
             border: 2px solid #007bff;
         }
 
-        /* Tablet styles (768px and up) */
-        @@media (min-width: 768px) {
-            body
-
-        {
-            padding: 20px;
+        .info-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .calendar-card {
-            padding: 25px;
-        }
-
-        .header-section {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-title {
-            font-size: 1.8rem;
-        }
-
-        .header-buttons .btn {
-            flex: 0 1 auto;
-        }
-
-        .calendar-header {
-            padding: 18px;
-        }
-
-            .calendar-header h3 {
-                font-size: 1.5rem;
+            .info-banner h4 {
+                margin: 0 0 10px 0;
+                font-size: 1.1rem;
             }
 
-        .calendar-nav button {
-            padding: 10px 18px;
-            font-size: 1rem;
+            .info-banner p {
+                margin: 0;
+                font-size: 0.9rem;
+                opacity: 0.95;
+            }
+
+        .booking-info-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
 
-        .calendar-grid {
-            gap: 8px;
-        }
+            .booking-info-card h6 {
+                color: #667eea;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
 
-        .calendar-day-header {
-            padding: 12px 8px;
-            font-size: 0.95rem;
-        }
+        @@media (min-width: 768px) {
+            body {
+                padding: 20px !important;
+            }
 
-        .calendar-day {
-            padding: 8px;
-            border-radius: 10px;
-            min-height: 80px;
-        }
+            .calendar-card {
+                padding: 25px;
+            }
 
-        .day-number {
-            font-size: 1.1rem;
-        }
+            .header-section {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
 
-        .booking-badge {
-            display: block;
-            font-size: 0.7rem;
-            padding: 3px 8px;
-        }
+            .header-title {
+                font-size: 1.8rem;
+            }
 
-        .legend {
-            flex-direction: row;
-            justify-content: center;
-            gap: 30px;
-        }
+            .header-buttons {
+                flex-wrap: nowrap;
+            }
 
-        .legend-item {
-            font-size: 1rem;
-        }
+                .header-buttons .btn {
+                    flex: 0 1 auto;
+                }
 
-        .legend-box {
-            width: 30px;
-            height: 30px;
-        }
+            .calendar-header {
+                padding: 18px;
+            }
 
-        }
+                .calendar-header h3 {
+                    font-size: 1.5rem;
+                }
 
-        /* Desktop styles (1024px and up) */
-        @@media (min-width: 1024px) {
-            body
+            .calendar-nav button {
+                padding: 10px 18px;
+                font-size: 1rem;
+            }
 
-        {
-            padding: 30px;
-        }
+            .calendar-grid {
+                gap: 8px;
+            }
 
-        .calendar-card {
-            padding: 30px;
-        }
-
-        .header-title {
-            font-size: 2rem;
-        }
-
-        .calendar-header {
-            padding: 20px;
-        }
-
-        .calendar-grid {
-            gap: 10px;
-        }
-
-        .calendar-day {
-            padding: 10px;
-            min-height: 100px;
-        }
-
-        .day-number {
-            font-size: 1.2rem;
-        }
-
-        .booking-badge {
-            font-size: 0.75rem;
-        }
-
-        }
-
-        /* Mobile landscape fix */
-        @@media (max-width: 767px) and (orientation: landscape) {
-            .calendar-day
-
-        {
-            min-height: 40px;
-        }
-
-        .calendar-header h3 {
-            font-size: 1rem;
-        }
-
-        }
-
-        /* Extra small screens */
-        @@media (max-width: 320px) {
-            body
-
-        {
-            padding: 5px;
-        }
-
-        .calendar-card {
-            padding: 8px;
-        }
-
-        .header-title {
-            font-size: 1rem;
-        }
-
-        .calendar-nav button {
-            padding: 5px 8px;
-            font-size: 0.75rem;
-        }
-
-        .calendar-header h3 {
-            font-size: 0.85rem;
-        }
-
-        .calendar-day {
-            min-height: 35px;
-        }
-
-        .day-number {
-            font-size: 0.7rem;
-        }
-
-        .calendar-day.booked::after {
-            width: 10px;
-            height: 10px;
-            font-size: 0.5rem;
-        }
-
-        }
-
-        /* Small mobile devices */
-        @@media (max-width: 380px) {
-            .calendar-card
-
-        {
-            padding: 10px;
-            border-radius: 15px;
-        }
-
-        .header-title {
-            font-size: 1.1rem;
-        }
-
-        .header-buttons .btn {
-            font-size: 0.85rem;
-            padding: 8px 12px;
-        }
-
-        .calendar-nav button {
-            padding: 6px 10px;
-            font-size: 0.8rem;
-        }
-
-        .calendar-header {
-            padding: 10px;
-        }
-
-            .calendar-header h3 {
+            .calendar-day-header {
+                padding: 12px 8px;
                 font-size: 0.95rem;
             }
 
-        .calendar-day-header {
-            font-size: 0.6rem;
-            padding: 5px 1px;
+            .calendar-day {
+                padding: 8px;
+                border-radius: 10px;
+                min-height: 80px;
+            }
+
+            .day-number {
+                font-size: 1.1rem;
+            }
+
+            .booking-badge {
+                display: block;
+                font-size: 0.7rem;
+                padding: 3px 8px;
+            }
+
+            .legend {
+                flex-direction: row;
+                justify-content: center;
+                gap: 30px;
+            }
+
+            .legend-item {
+                font-size: 1rem;
+            }
+
+            .legend-box {
+                width: 30px;
+                height: 30px;
+            }
+
+            .info-banner h4 {
+                font-size: 1.3rem;
+            }
+
+            .info-banner p {
+                font-size: 1rem;
+            }
         }
 
-        .calendar-grid {
-            gap: 2px;
+        @@media (min-width: 1024px) {
+            body {
+                padding: 30px !important;
+            }
+
+            .calendar-card {
+                padding: 30px;
+            }
+
+            .header-title {
+                font-size: 2rem;
+            }
+
+            .calendar-header {
+                padding: 20px;
+            }
+
+            .calendar-grid {
+                gap: 10px;
+            }
+
+            .calendar-day {
+                padding: 10px;
+                min-height: 100px;
+            }
+
+            .day-number {
+                font-size: 1.2rem;
+            }
+
+            .booking-badge {
+                font-size: 0.75rem;
+            }
         }
 
-        .calendar-day {
-            min-height: 40px;
-            border-radius: 4px;
+        @@media (max-width: 767px) and (orientation: landscape) {
+            .calendar-day {
+                min-height: 40px;
+            }
+
+            .calendar-header h3 {
+                font-size: 1rem;
+            }
         }
 
-        .day-number {
-            font-size: 0.75rem;
-        }
+        @@media (max-width: 380px) {
+            .calendar-card {
+                padding: 10px;
+                border-radius: 15px;
+            }
 
-        .legend {
-            padding: 10px;
-        }
+            .header-title {
+                font-size: 1.1rem;
+            }
 
-        .legend-item {
-            font-size: 0.8rem;
-        }
+            .header-buttons .btn {
+                font-size: 0.85rem;
+                padding: 8px 12px;
+            }
 
-        .legend-box {
-            width: 20px;
-            height: 20px;
-        }
+            .calendar-nav button {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
 
+            .calendar-header {
+                padding: 10px;
+            }
+
+                .calendar-header h3 {
+                    font-size: 0.95rem;
+                }
+
+            .calendar-day-header {
+                font-size: 0.6rem;
+                padding: 5px 1px;
+            }
+
+            .calendar-grid {
+                gap: 2px;
+            }
+
+            .calendar-day {
+                min-height: 40px;
+                border-radius: 4px;
+            }
+
+            .day-number {
+                font-size: 0.75rem;
+            }
+
+            .legend {
+                padding: 10px;
+            }
+
+            .legend-item {
+                font-size: 0.8rem;
+            }
+
+            .legend-box {
+                width: 20px;
+                height: 20px;
+            }
         }
     </style>
 </head>
@@ -481,12 +511,49 @@
     <div class="container-fluid">
         <div class="calendar-card">
             <div class="header-section">
-                <h2 class="header-title">🗓️ Garden Booking Calendar</h2>
+                <h2 class="header-title">
+                    <span>🌿</span>
+                    <span>Garden Booking Calendar</span>
+                </h2>
                 <div class="header-buttons">
-                    <a asp-action="Index" class="btn btn-primary">📝 Book Now</a>
-                    <a asp-action="AllBookings" class="btn btn-secondary">📋 All Bookings</a>
+                    @if (isAuthenticated)
+                    {
+                        <div class="user-info">
+                            <span>👤 <strong>@userName</strong></span>
+                        </div>
+                        <a asp-action="Index" asp-controller="Home" class="btn btn-success">📝 Book Now</a>
+                        <a asp-action="AllBookings" asp-controller="Home" class="btn btn-info">📋 My Bookings</a>
+                        <form asp-action="Logout" asp-controller="Account" method="post" style="margin: 0;">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger">🚪 Logout</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-query-returnUrl="@Context.Request.Path" class="btn btn-primary">
+                            🔒 Login
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-primary">
+                            📝 Register
+                        </a>
+                    }
                 </div>
             </div>
+
+            @if (!isAuthenticated)
+            {
+                <div class="info-banner">
+                    <h4>👋 Welcome to Garden Booking!</h4>
+                    <p>You can see which dates are booked. Login to view details and make your own booking.</p>
+                </div>
+            }
+            else
+            {
+                <div class="info-banner">
+                    <h4>✨ Welcome Back, @userName!</h4>
+                    <p>Click any date to see full booking details or make a reservation.</p>
+                </div>
+            }
 
             <div class="calendar-header">
                 <div class="calendar-nav">
@@ -503,7 +570,7 @@
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-box legend-available"></div>
-                    <span>Available - Click to Book</span>
+                    <span>Available</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-box legend-booked"></div>
@@ -517,18 +584,16 @@
         </div>
     </div>
 
-    <!-- Booking Details Modal -->
     <div class="modal fade" id="bookingModal" tabindex="-1" role="dialog" aria-labelledby="bookingModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title" id="bookingModalLabel">📅 Date Details</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body" id="bookingDetails">
-                </div>
+                <div class="modal-body" id="bookingDetails"></div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
@@ -542,6 +607,7 @@
         let currentDate = new Date();
         let bookedDates = @Html.Raw(Json.Serialize(bookedDates.Select(d => d.ToString("yyyy-MM-dd"))));
         let monthBookings = [];
+        const isUserLoggedIn = @Json.Serialize(isAuthenticated);
 
         const monthNames = ["January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"];
@@ -550,7 +616,11 @@
         async function loadMonthBookings(year, month) {
             try {
                 const response = await fetch(`/Home/GetBookingsForMonth?year=${year}&month=${month}`);
-                monthBookings = await response.json();
+                if (response.ok) {
+                    monthBookings = await response.json();
+                } else {
+                    monthBookings = [];
+                }
             } catch (error) {
                 console.error('Error loading bookings:', error);
                 monthBookings = [];
@@ -571,12 +641,10 @@
 
             let calendarHTML = '';
 
-            // Day headers
             dayNames.forEach(day => {
                 calendarHTML += `<div class="calendar-day-header">${day}</div>`;
             });
 
-            // Previous month days
             for (let i = firstDay - 1; i >= 0; i--) {
                 const day = daysInPrevMonth - i;
                 calendarHTML += `<div class="calendar-day other-month">
@@ -584,25 +652,33 @@
                 </div>`;
             }
 
-            // Current month days
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const currentDateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+                const cellDate = new Date(year, month, day);
+                cellDate.setHours(0, 0, 0, 0);
+
+                const isToday = today.getTime() === cellDate.getTime();
+                const isPast = cellDate < today;
                 const isBooked = bookedDates.includes(currentDateStr);
+
                 const booking = monthBookings.find(b => b.date === currentDateStr);
 
                 let classes = 'calendar-day';
                 if (isToday) classes += ' today';
+                if (isPast) classes += ' past-date';
                 if (isBooked) classes += ' booked';
 
-                calendarHTML += `<div class="${classes}" onclick='showBookingDetails(${JSON.stringify(booking)}, "${currentDateStr}")'>
+                const safeBooking = booking ? JSON.stringify(booking).replace(/"/g, '&quot;') : 'null';
+
+                calendarHTML += `<div class="${classes}" onclick='showBookingDetails(${safeBooking}, "${currentDateStr}", ${isPast})'>
                     <div class="day-number">${day}</div>
                     ${isBooked ? '<div class="booking-badge">BOOKED</div>' : ''}
                 </div>`;
             }
 
-            // Next month days
             const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
             const remainingCells = totalCells - (firstDay + daysInMonth);
             for (let i = 1; i <= remainingCells; i++) {
@@ -614,55 +690,103 @@
             document.getElementById('calendarGrid').innerHTML = calendarHTML;
         }
 
-        function showBookingDetails(booking, dateStr) {
+        function showBookingDetails(booking, dateStr, isPast) {
             const date = new Date(dateStr);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             const formattedDate = date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             });
 
-            let content = `<h5>📅 ${formattedDate}</h5>`;
+            let content = `<h5 class="mb-3">📅 ${formattedDate}</h5>`;
 
-            if (booking) {
+            // NON-LOGGED-IN USERS: Show basic info only
+            if (!isUserLoggedIn) {
+                if (isPast) {
+                    content += `<div class="alert alert-secondary"><strong>⏰ This date has passed.</strong></div>`;
+                    if (booking) {
+                        content += `<div class="alert alert-info">This date was booked. Login to see details.</div>`;
+                    }
+                } else if (booking) {
+                    content += `
+                        <div class="alert alert-danger">
+                            <strong>❌ This date is already booked.</strong>
+                        </div>
+                        <p class="text-muted text-center">Login to see who booked this date and view details.</p>
+                    `;
+                } else {
+                    content += `
+                        <div class="alert alert-success">
+                            <strong>✅ This date is available!</strong>
+                        </div>
+                        <p class="text-muted text-center">Login to book this date for your event.</p>
+                    `;
+                }
+
+                content += `
+                    <div class="text-center mt-3">
+                        <a href="/Account/Login?ReturnUrl=/Home/Calendar" class="btn btn-primary btn-lg">
+                            🔒 Login to Continue
+                        </a>
+                    </div>
+                `;
+
+                $("#bookingDetails").html(content);
+                $("#bookingModal").modal("show");
+                return;
+            }
+
+            // LOGGED-IN USERS: Show full details
+            if (isPast) {
+                content += `<div class="alert alert-secondary"><strong>⏰ This date has already passed.</strong></div>`;
+
+                if (booking) {
+                    content += `
+                        <div class="booking-info-card">
+                            <h6>📋 Booking Information:</h6>
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr><td><strong>Customer Name:</strong></td><td>${booking.name}</td></tr>
+                                <tr><td><strong>Number of People:</strong></td><td>${booking.people}</td></tr>
+                                <tr><td><strong>Purpose:</strong></td><td>${booking.purpose || 'Not specified'}</td></tr>
+                            </table>
+                        </div>
+                    `;
+                }
+            }
+            else if (booking) {
                 content += `
                     <div class="alert alert-danger">
-                        <h6>❌ Garden is Already Booked</h6>
+                        <strong>❌ This date is already booked.</strong>
                     </div>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Customer Name:</th>
-                            <td>${booking.name}</td>
-                        </tr>
-                        <tr>
-                            <th>Number of People:</th>
-                            <td>${booking.people}</td>
-                        </tr>
-                        <tr>
-                            <th>Purpose:</th>
-                            <td>${booking.purpose || '-'}</td>
-                        </tr>
-                    </table>
-                    <p class="text-muted">Please select another available date.</p>
-                `;
-                document.getElementById('bookingDetails').innerHTML = content;
-                $('#bookingModal').modal('show');
-            } else if (date < today) {
-                content += `
-                    <div class="alert alert-secondary">
-                        <h6>⏱️ Date Has Passed</h6>
-                        <p>This date is no longer available for booking.</p>
+                    <div class="booking-info-card">
+                        <h6>📋 Booking Information:</h6>
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr><td><strong>Customer Name:</strong></td><td>${booking.name}</td></tr>
+                            <tr><td><strong>Number of People:</strong></td><td>${booking.people}</td></tr>
+                            <tr><td><strong>Purpose:</strong></td><td>${booking.purpose || 'Not specified'}</td></tr>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="/Home/Index" class="btn btn-success">
+                            📝 Book Another Date
+                        </a>
                     </div>
                 `;
-                document.getElementById('bookingDetails').innerHTML = content;
-                $('#bookingModal').modal('show');
-            } else {
-                window.location.href = `/Home/Index?selectedDate=${dateStr}`;
             }
+            else {
+                content += `
+                    <div class="alert alert-success">
+                        <strong>✅ This date is available!</strong>
+                        <p class="mb-0 mt-2">You can book this date for your event.</p>
+                    </div>
+                    <div class="text-center mt-4">
+                        <a href="/Home/Index?date=${dateStr}" class="btn btn-success btn-lg">
+                            📝 Book This Date
+                        </a>
+                    </div>
+                `;
+            }
+
+            $("#bookingDetails").html(content);
+            $("#bookingModal").modal("show");
         }
 
         function previousMonth() {
