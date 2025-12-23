@@ -29,7 +29,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
             min-height: 100vh;
             padding: 0px;
             margin: 0;
@@ -60,7 +60,7 @@
 
 
         .header-section {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 20px;
             text-align: center;
@@ -131,8 +131,8 @@
         }
 
             .form-control:focus {
-                border-color: #11998e;
-                box-shadow: 0 0 0 0.2rem rgba(17, 153, 142, 0.15);
+                border-color: #1e3c72;
+                box-shadow: 0 0 0 0.2rem rgba(30, 60, 114, 0.15);
                 outline: none;
             }
 
@@ -223,7 +223,7 @@
             }
 
         .btn-book {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border: none;
             color: white;
             padding: 14px 30px;
@@ -246,8 +246,8 @@
             }
 
         .garden-details {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            border-left: 4px solid #2196f3;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-left: 4px solid #1e3c72;
             border-radius: 10px;
             padding: 20px;
             margin-top: 20px;
@@ -272,9 +272,8 @@
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            background: #f0f9ff;
-            border-radius: 15px;
-            border: 2px dashed #11998e;
+            background: #f8fafc;
+            border: 2px dashed #94a3b8;
         }
 
             .empty-state h4 {
@@ -510,12 +509,27 @@
                                            placeholder="+91 1234567890" required />
                                 </div>
 
-                                <div class="form-group">
+                                @* <div class="form-group">
                                     <label asp-for="BookingDate">Booking Date *</label>
                                     <input asp-for="BookingDate" type="date"
                                            class="form-control form-control-lg"
                                            min="@DateTime.Today.ToString("yyyy-MM-dd")"
                                            value="@ViewBag.SelectedDate"
+                                           required />
+                                </div> *@
+                                <div class="form-group">
+                                    <label>Start Date *</label>
+                                    <input asp-for="StartDate" type="date"
+                                           class="form-control form-control-lg"
+                                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                           required />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>End Date *</label>
+                                    <input asp-for="EndDate" type="date"
+                                           class="form-control form-control-lg"
+                                           min="@DateTime.Today.ToString("yyyy-MM-dd")"
                                            required />
                                 </div>
 

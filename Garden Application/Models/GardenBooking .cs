@@ -4,6 +4,8 @@ using Azure.Data.Tables;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.Serialization;
 
 namespace GardenBookingApp.Models
 {
@@ -29,6 +31,13 @@ namespace GardenBookingApp.Models
         [DataType(DataType.Date)]
         [Display(Name = "Booking Date")]
         public DateTime BookingDate { get; set; }
+
+        [IgnoreDataMember]
+        public DateTime StartDate { get; set; }
+
+
+        [IgnoreDataMember]
+        public DateTime EndDate { get; set; }
 
         [Display(Name = "Number of People")]
         public int NumberOfPeople { get; set; }

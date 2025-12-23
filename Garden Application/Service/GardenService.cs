@@ -25,6 +25,14 @@ namespace GardenBookingApp.Services
         {
             try
             {
+                // 🔴 VERY IMPORTANT FIX
+                booking.BookingDate = DateTime.SpecifyKind(booking.BookingDate, DateTimeKind.Utc);
+
+                booking.CreatedDate = DateTime.SpecifyKind(
+                    booking.CreatedDate == default ? DateTime.UtcNow : booking.CreatedDate,
+                    DateTimeKind.Utc
+                );
+
                 booking.SetKeys();
                 await _tableClient.AddEntityAsync(booking);
                 return true;
@@ -34,6 +42,7 @@ namespace GardenBookingApp.Services
                 return false;
             }
         }
+
 
         public async Task<List<GardenBooking>> GetAllBookingsAsync()
         {

@@ -31,35 +31,82 @@ namespace GardenBookingApp.Controllers
             return View();
         }
 
+        //[HttpPost]
+        //[ValidateAntiForgeryToken] // Recommended for POST actions
+        //public async Task<IActionResult> Book(GardenBooking booking)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        // Check if date is already booked
+        //        var isBooked = await _gardenService.IsDateBookedAsync(booking.BookingDate);
+
+        //        if (isBooked)
+        //        {
+        //            TempData["Error"] = "Sorry! Garden is already booked for this date.";
+        //            return RedirectToAction("Index");
+        //        }
+
+        //        var success = await _gardenService.CreateBookingAsync(booking);
+
+        //        if (success)
+        //        {
+        //            TempData["Success"] = $"Garden booked successfully for {booking.BookingDate.ToString("dd MMM yyyy")}!";
+        //        }
+        //        else
+        //        {
+        //            TempData["Error"] = "Booking failed. Please try again.";
+        //        }
+        //    }
+
+        //    return RedirectToAction("Index");
+        //}
+
         [HttpPost]
-        [ValidateAntiForgeryToken] // Recommended for POST actions
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Book(GardenBooking booking)
         {
-            if (ModelState.IsValid)
+            if (booking.EndDate < booking.StartDate)
             {
-                // Check if date is already booked
-                var isBooked = await _gardenService.IsDateBookedAsync(booking.BookingDate);
+                TempData["Error"] = "End date cannot be before start date.";
+                return RedirectToAction("Index");
+            }
 
-                if (isBooked)
+            // Generate date range
+            var dates = Enumerable.Range(0, (booking.EndDate - booking.StartDate).Days + 1)
+                                  .Select(d => booking.StartDate.AddDays(d))
+                                  .ToList();
+
+            // Check availability
+            foreach (var date in dates)
+            {
+                if (await _gardenService.IsDateBookedAsync(date))
                 {
-                    TempData["Error"] = "Sorry! Garden is already booked for this date.";
+                    TempData["Error"] = $"Garden already booked on {date:dd MMM yyyy}";
                     return RedirectToAction("Index");
-                }
-
-                var success = await _gardenService.CreateBookingAsync(booking);
-
-                if (success)
-                {
-                    TempData["Success"] = $"Garden booked successfully for {booking.BookingDate.ToString("dd MMM yyyy")}!";
-                }
-                else
-                {
-                    TempData["Error"] = "Booking failed. Please try again.";
                 }
             }
 
+            // Save booking for each day
+            foreach (var date in dates)
+            {
+                var dailyBooking = new GardenBooking
+                {
+                    CustomerName = booking.CustomerName,
+                    MobileNumber = booking.MobileNumber,
+                    BookingDate = date,
+                    NumberOfPeople = booking.NumberOfPeople,
+                    Purpose = booking.Purpose
+                };
+
+                await _gardenService.CreateBookingAsync(dailyBooking);
+            }
+
+            TempData["Success"] =
+                $"Garden booked from {booking.StartDate:dd MMM} to {booking.EndDate:dd MMM yyyy}";
+
             return RedirectToAction("Index");
         }
+
 
         public async Task<IActionResult> MyBookings()
         {
@@ -139,7 +186,10 @@ namespace GardenBookingApp.Controllers
                     date = b.BookingDate.ToString("yyyy-MM-dd"),
                     name = b.CustomerName,
                     people = b.NumberOfPeople,
-                    purpose = b.Purpose
+                    purpose = b.Purpose,
+                    partitionKey = b.PartitionKey,
+                    rowKey = b.RowKey
+
                 })
                 .ToList();
 
