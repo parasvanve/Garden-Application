@@ -1,4 +1,4 @@
-name: Build Garden Application
+name: Garden Application CI
 
 on:
   push:
@@ -11,26 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
 
-    - name: Checkout Source Code
-      uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+      - name: Restore Packages
+        run: dotnet restore "Garden Application.sln"
 
-    - name: Restore Packages
-      run: dotnet restore "Garden Application.sln"
+      - name: Build Solution
+        run: dotnet build "Garden Application.sln" --configuration Release --no-restore
 
-    - name: Build Solution
-      run: dotnet build "Garden Application.sln" --configuration Release --no-restore
+      - name: Publish Application
+        run: dotnet publish "Garden Application/Garden Application.csproj" --configuration Release --no-build --output ./publish
 
-    - name: Publish Application
-      run: dotnet publish "Garden Application/Garden Application.csproj" -c Release -o publish
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: GardenApplication
-        path: publish
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GardenApplication
+          path: ./publish
