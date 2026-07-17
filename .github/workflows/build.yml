@@ -7,7 +7,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -28,8 +27,30 @@ jobs:
       - name: Publish Application
         run: dotnet publish "Garden Application/Garden Application.csproj" --configuration Release --no-build --output ./publish
 
-      - name: Upload Artifact
+      # Create a ZIP file from the publish folder
+      - name: Create ZIP Package
+        run: |
+          cd publish
+          zip -r ../GardenApplication.zip .
+
+      # Store the publish folder in GitHub Artifacts
+      - name: Upload Artifact to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: GardenApplication
           path: ./publish
+
+      # Install Cloudsmith CLI
+      - name: Install Cloudsmith CLI
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install cloudsmith-cli
+
+      # Upload ZIP to Cloudsmith
+      - name: Upload ZIP to Cloudsmith
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+        run: |
+          cloudsmith push raw \
+            ${{ secrets.CLOUDSMITH_NAMESPACE }}/${{ secrets.CLOUDSMITH_REPOSITORY }} \
+            GardenApplication.zip
