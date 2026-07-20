@@ -12,6 +12,8 @@ public class AccountController : Controller
         return View("LoginPage");
     }
 
+    
+
     // POST: Login
     [HttpPost]
     public IActionResult Login(string username, string password, string returnUrl)
