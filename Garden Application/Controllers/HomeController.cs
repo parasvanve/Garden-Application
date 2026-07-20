@@ -29,6 +29,7 @@ namespace GardenBookingApp.Controllers
             }
 
             return View();
+            
         }
 
         //[HttpPost]
