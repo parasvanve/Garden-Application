@@ -32,6 +32,7 @@ public class AccountController : Controller
 
             return RedirectToAction("Calendar", "Home");
         }
+        
 
         ViewBag.Error = "Invalid username or password.";
         return View("LoginPage");
