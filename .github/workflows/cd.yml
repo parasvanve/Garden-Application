@@ -20,8 +20,8 @@ jobs:
         with:
           inlineScript: |
             az webapp restart \
-              --resource-group YOUR_RESOURCE_GROUP \
-              --name YOUR_WEBAPP_NAME
+              --resource-group Garden-RG \
+              --name garden-application
 
       - name: Deployment Completed
         run: echo "Deployment Successful"
